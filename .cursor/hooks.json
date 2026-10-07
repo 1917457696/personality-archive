@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "type": "prompt",
+        "matcher": "Write|Edit",
+        "timeout": 20,
+        "prompt": "Inspect this successful file edit. For this project, compare the edit's behavior, data flow, and user-visible effects with the relevant documentation in docs/ (especially prd.md, information-architecture.md, decisions.md, and the phase/sprint contracts). If the edit may change documented behavior, architecture, privacy, persistence, or acceptance criteria, tell the agent to compare the relevant docs and update them in this task if there is drift. Otherwise, remind the agent to perform a final changed-files documentation drift review before finishing. Do not block the edit or alter code. Hook event: $ARGUMENTS. Return only valid JSON with an `additional_context` string for the agent; use an empty string if this edit has no documentation impact."
+      }
+    ]
+  }
+}

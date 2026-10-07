@@ -3,11 +3,13 @@ import type { ProviderAdapter, ProviderRequest } from './shared.ts';
 import { openAIAdapter } from './openai.ts';
 import { kimiAdapter } from './kimi.ts';
 import { claudeAdapter } from './claude.ts';
+import { deepSeekAdapter } from './deepseek.ts';
 
 export const providerAdapters: Record<ProviderId, ProviderAdapter> = {
  openai: openAIAdapter,
  kimi: kimiAdapter,
- claude: claudeAdapter
+ claude: claudeAdapter,
+ deepseek: deepSeekAdapter
 };
 
 export function requestFromProvider(provider: ProviderId, input: ProviderRequest): Promise<string> {

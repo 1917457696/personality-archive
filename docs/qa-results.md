@@ -34,4 +34,4 @@ Date: 2026-10-07
 ## Type and architecture checks
 
 - `src/ui` imports `types`, `config`, and the runtime façade; it does not import repo/service modules directly. No `localStorage`, `sessionStorage`, or console logging calls are present in the app layers.
-- Provider defaults list OpenAI `gpt-4o-mini` / `gpt-4.1-mini`, Kimi `kimi-k2.5`, and Claude `claude-haiku-4-5-20251001` / `claude-sonnet-4-6`.
+- Historical Sprint 1 QA snapshot: provider defaults at that verification point were OpenAI `gpt-4o-mini` / `gpt-4.1-mini`, Kimi `kimi-k2.5`, and Claude `claude-haiku-4-5-20251001` / `claude-sonnet-4-6`. See the provider-catalog decision for the current list.

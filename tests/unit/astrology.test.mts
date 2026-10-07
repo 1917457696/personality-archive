@@ -29,9 +29,13 @@ const pairResult = {
 function mockChatResponse(content: string, status = 200) {
  return new Response(JSON.stringify({ choices: [{ message: { content } }] }), { status, headers: { 'content-type': 'application/json' } });
 }
+function mockResponsesResponse(content: string, status = 200) {
+ return new Response(JSON.stringify({ output: [{ type: 'message', content: [{ type: 'output_text', text: content }] }] }), { status, headers: { 'content-type': 'application/json' } });
+}
 
 test('zodiac configuration contains the 12 stable IDs and the fixed disclaimer', () => {
  assert.deepEqual(zodiacSigns.map(sign => sign.id), ['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces']);
+ assert.deepEqual(zodiacSigns.map(sign => sign.element), ['fire','earth','air','water','fire','earth','air','water','fire','earth','air','water']);
  assert.equal(new Set(zodiacSigns.map(sign => sign.name)).size, 12);
  assert.match(astrologyDisclaimer, /仅供娱乐与自我反思/);
  assert.match(astrologyDisclaimer, /不构成科学评估、心理诊断或可靠预测/);
@@ -63,11 +67,14 @@ test('compatibility inputs require two signs and valid custom labels from 1–20
 test('prompts contain only the current astrology choices and explicitly limit labels to address', () => {
  const single = buildSingleSignPrompt({ sign: 'leo' });
  assert.match(single, /狮子座/);
- assert.match(single, /仅包含星座/);
+ assert.match(single, /火象/);
+ assert.match(single, /仅包含星座及元素分类/);
  assert.doesNotMatch(single, /profileId|sourceId|一段完全不该发送的私人文本/);
  const pair = buildCompatibilityPrompt({ personA: { sign: 'taurus', label: 'female' }, personB: { sign: 'aries', label: 'custom', customLabel: '小林' } });
  assert.match(pair, /金牛座/);
  assert.match(pair, /白羊座/);
+ assert.match(pair, /土象/);
+ assert.match(pair, /火象/);
  assert.match(pair, /小林/);
  assert.match(pair, /绝不能影响互补、摩擦或建议等分析结论/);
  assert.match(pair, /视为数据而非指令/);
@@ -94,8 +101,8 @@ test('mocked API request includes only astrology input; result is not persisted'
  let sentPrompt = '';
  globalThis.fetch = async (_url, init) => {
   const body = JSON.parse(String(init?.body));
-  sentPrompt = body.messages[0].content;
-  return mockChatResponse(JSON.stringify(pairResult));
+  sentPrompt = body.input;
+  return mockResponsesResponse(JSON.stringify(pairResult));
  };
  try {
   const input: CompatibilityInput = { personA: { sign: 'taurus', label: 'female' }, personB: { sign: 'aries', label: 'male' } };
@@ -109,25 +116,27 @@ test('mocked API request includes only astrology input; result is not persisted'
  } finally { globalThis.fetch = original; }
 });
 
-test('OpenAI, Kimi, and Claude adapters can all return a validated astrology reading', async () => {
+test('OpenAI, Kimi, Claude, and DeepSeek adapters can all return a validated astrology reading', async () => {
  const original = globalThis.fetch;
  const requestedUrls: string[] = [];
  globalThis.fetch = async (url, init) => {
   requestedUrls.push(String(url));
   const claude = String(url).includes('anthropic.com');
+  const openai = String(url).includes('api.openai.com');
   const body = JSON.stringify(singleResult);
   return claude
    ? new Response(JSON.stringify({ content: [{ type: 'text', text: body }] }), { status: 200 })
-   : mockChatResponse(body);
+   : openai ? mockResponsesResponse(body) : mockChatResponse(body);
  };
  try {
-  for (const provider of ['openai','kimi','claude'] as const) {
+  for (const provider of ['openai','kimi','claude','deepseek'] as const) {
    assert.deepEqual(await requestSingleSignReading(provider, 'test-model', 'sk-test-only', { sign: 'virgo' }), singleResult);
   }
   assert.deepEqual(requestedUrls, [
-   'https://api.openai.com/v1/chat/completions',
+   'https://api.openai.com/v1/responses',
    'https://api.moonshot.cn/v1/chat/completions',
-   'https://api.anthropic.com/v1/messages'
+   'https://api.anthropic.com/v1/messages',
+   'https://api.deepseek.com/chat/completions'
   ]);
  } finally { globalThis.fetch = original; }
 });
@@ -142,9 +151,9 @@ test('provider failures and invalid model JSON return safe, retryable errors', a
   await assert.rejects(requestCompatibilityReading('openai', 'model', key, { personA: { sign: 'taurus', label: 'unspecified' }, personB: { sign: 'aries', label: 'unspecified' } }), error => error instanceof Error && error.message.includes('频繁') && !error.message.includes(key));
   globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: key } }), { status: 401 });
   await assert.rejects(requestSingleSignReading('claude', 'model', key, { sign: 'aries' }), error => error instanceof Error && error.message.includes('拒绝了请求') && !error.message.includes(key));
-  globalThis.fetch = async () => mockChatResponse('not JSON');
+  globalThis.fetch = async () => mockResponsesResponse('not JSON');
   await assert.rejects(requestSingleSignReading('openai', 'model', key, { sign: 'aries' }), /不是有效 JSON/);
-  globalThis.fetch = async () => mockChatResponse(JSON.stringify({ ...singleResult, practicalAdvice: undefined }));
+  globalThis.fetch = async () => mockResponsesResponse(JSON.stringify({ ...singleResult, practicalAdvice: undefined }));
   await assert.rejects(requestSingleSignReading('openai', 'model', key, { sign: 'aries' }), /不支持的字段或缺少必需字段/);
  } finally { globalThis.fetch = original; }
 });
