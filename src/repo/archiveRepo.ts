@@ -1,0 +1,10 @@
+import { openDB, type DBSchema } from 'idb';
+import type { Profile, Source, Report, ArchiveData } from '../types/domain';
+interface ArchiveSchema extends DBSchema { profiles:{key:string;value:Profile}; sources:{key:string;value:Source;indexes:{'by-profile':string}}; reports:{key:string;value:Report;indexes:{'by-profile':string}} }
+const dbPromise=openDB<ArchiveSchema>('xingxiang-archive',1,{upgrade(db){db.createObjectStore('profiles',{keyPath:'id'});const s=db.createObjectStore('sources',{keyPath:'id'});s.createIndex('by-profile','profileId');const r=db.createObjectStore('reports',{keyPath:'id'});r.createIndex('by-profile','profileId')}});
+export const repository={
+ async all():Promise<ArchiveData>{const db=await dbPromise;const [profiles,sources,reports]=await Promise.all([db.getAll('profiles'),db.getAll('sources'),db.getAll('reports')]);return{profiles:profiles.sort((a,b)=>b.updatedAt-a.updatedAt),sources,reports:reports.sort((a,b)=>b.createdAt-a.createdAt)}},
+ async saveProfile(v:Profile){await(await dbPromise).put('profiles',v)},async saveSource(v:Source){await(await dbPromise).put('sources',v)},async saveReport(v:Report){await(await dbPromise).put('reports',v)},async deleteSource(id:string){await(await dbPromise).delete('sources',id)},
+ async deleteProfile(id:string){const db=await dbPromise;const tx=db.transaction(['profiles','sources','reports'],'readwrite');const [ss,rs]=await Promise.all([tx.objectStore('sources').index('by-profile').getAllKeys(id),tx.objectStore('reports').index('by-profile').getAllKeys(id)]);ss.forEach(k=>tx.objectStore('sources').delete(k));rs.forEach(k=>tx.objectStore('reports').delete(k));tx.objectStore('profiles').delete(id);await tx.done},
+ async merge(data:ArchiveData,choices:Record<string,'keep'|'replace'>){const db=await dbPromise;const tx=db.transaction(['profiles','sources','reports'],'readwrite');for(const storeName of ['profiles','sources','reports'] as const){for(const item of data[storeName] as any[]){const old=await tx.objectStore(storeName).get(item.id);if(!old||choices[item.id]==='replace')await tx.objectStore(storeName).put(item)}}await tx.done}
+};

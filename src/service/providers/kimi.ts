@@ -1,0 +1,2 @@
+import type { ProviderAdapter } from './shared.ts';import {send,resultText} from './shared.ts';
+export const kimiAdapter:ProviderAdapter={id:'kimi',endpoint:'https://api.moonshot.cn/v1/chat/completions',async request({model,apiKey,prompt,signal}){const r=await send(this.endpoint,{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${apiKey}`},body:JSON.stringify({model,temperature:.35,response_format:{type:'json_object'},messages:[{role:'user',content:prompt}]})});return resultText(r,this.id)}};

@@ -1,0 +1,2 @@
+export type PageDocument={numPages:number;getPage:(page:number)=>Promise<{getTextContent:()=>Promise<{items:unknown[]}>}>};
+export async function extractPages(doc:PageDocument){const pages:{page:number;text:string}[]=[];for(let page=1;page<=doc.numPages;page++){const content=await(await doc.getPage(page)).getTextContent();const text=content.items.map((item:any)=>'str'in item?item.str:'').join(' ').replace(/\s+/g,' ').trim();if(text)pages.push({page,text})}return pages}
