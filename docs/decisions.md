@@ -19,3 +19,11 @@ OpenAI, Kimi, and Claude requests use separate adapters implementing the same re
 ## 2026-10-07 — Remove the small legacy Kimi option
 
 The shared report preflight has a fixed 40,000-character cap. Remove the legacy 8k-context model from the built-in list so the app does not offer a model whose context is smaller than the safety cap. Kimi K2.5 remains a default option; user accounts may still have different model entitlements.
+
+## 2026-10-07 — Phase 2 astrology is an ephemeral entertainment feature
+
+Add single Western sun-sign relationship readings and two-person compatibility as separate top-level areas. Use the 12 signs directly, without collecting birth date, time, or place. Reuse the selected provider/model and session-memory API key. Before each request, disclose that only the current astrology inputs and optional labels are sent and that charges may apply; never send archive data. Phrase results as non-scientific, exploratory entertainment with no certainty or match score. Keep them in page-session memory only, outside IndexedDB, report history, and backups.
+
+## 2026-10-07 — Optional compatibility labels are address-only
+
+Each person may use 女, 男, a custom label up to 20 characters, or no label (the default). Labels support wording only and must not influence compatibility reasoning. Single-sign analysis focuses on relationships; compatibility analyzes overview, complementary dynamics, friction points, and practical advice.
