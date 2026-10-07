@@ -6,3 +6,25 @@ export type Finding = { observation: string; inference: string; alternative: str
 export type Report = { id: string; profileId: string; createdAt: number; sourceIds: string[]; dimensions: Record<DimensionKey, Finding[]>; summary: string; caveat: string; stale: boolean };
 export type ArchiveData = { profiles: Profile[]; sources: Source[]; reports: Report[] };
 export type ProviderId = 'openai' | 'kimi' | 'claude';
+export type ZodiacSignId = 'aries'|'taurus'|'gemini'|'cancer'|'leo'|'virgo'|'libra'|'scorpio'|'sagittarius'|'capricorn'|'aquarius'|'pisces';
+export type GenderLabel = 'female'|'male'|'custom'|'unspecified';
+export type ZodiacSign = { id: ZodiacSignId; name: string };
+export type SingleSignInput = { sign: ZodiacSignId };
+export type CompatibilityPersonInput = { sign: ZodiacSignId; label: GenderLabel; customLabel?: string };
+export type CompatibilityInput = { personA: CompatibilityPersonInput; personB: CompatibilityPersonInput };
+export type SingleSignResult = {
+ relationshipTendencies: string[];
+ emotionalNeeds: string[];
+ fittingPartnerTraits: string[];
+ frictionPoints: string[];
+ practicalAdvice: string[];
+};
+export type CompatibilityResult = {
+ overview: string;
+ complementaryDynamics: string[];
+ frictionPoints: string[];
+ practicalAdvice: string[];
+};
+export type AstrologyResult =
+ | { kind: 'single'; input: SingleSignInput; result: SingleSignResult }
+ | { kind: 'compatibility'; input: CompatibilityInput; result: CompatibilityResult };
